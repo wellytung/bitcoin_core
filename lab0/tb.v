@@ -1,9 +1,12 @@
- module simple_fsm_tb;
+ module tb;
 
  reg clk = 1'b1;
  reg rst_n = 1'b1;
- reg w_i = 1'b0;
- wire z_o;
+ reg seq_in = 1'b0;
+ wire seq_out;
+
+ integer i;
+ reg [2:0] random_dly;
 
  // clk
  always #10 clk = ~clk;
@@ -19,21 +22,40 @@
   ->after_rst;
  end
 
- // w_i
+ // seq_in
  initial begin
+
   @(after_rst);
-  repeat(2)@(posedge clk); // 60ns
-  w_i <= 1'b1;
-  @(posedge clk); // 80 ns
-  w_i <= 1'b0;
-  @(posedge clk); // 100 ns
-  w_i <= 1'b1;
-  repeat(2)@(posedge clk); // 140 ns
-  w_i <= 1'b0;
-  @(posedge clk); // 160 ns
-  w_i <= 1'b1;
-  repeat(3)@(posedge clk); // 220 ns
-  w_i <= 1'b0;
+
+  // direct input test 
+  @(posedge clk) seq_in <= 1'b0; 
+  @(posedge clk) seq_in <= 1'b0; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b0; 
+  @(posedge clk) seq_in <= 1'b0; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b0; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b0; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b1; 
+  @(posedge clk) seq_in <= 1'b1; 
+
+  // random input testing
+  for ( i = 0 ; i < 50 ; i ++ ) begin
+    random_dly = $random;
+    repeat(random_dly) @(posedge clk);
+    seq_in <= $random;
+  end
+
+  repeat(10)@(posedge clk); 
+  $display("total detection count: %d", det_cnt);
+  $finish;
+
 end
 
 reg [31:0] clk_cnt;
@@ -52,16 +74,26 @@ initial begin
   $dumpvars;
 end
 
-initial begin
-  repeat(500)@(posedge clk);
-  $finish;
+// initial begin
+//   repeat(500)@(posedge clk);
+//   $finish;
+// end
+
+
+reg [9:0] det_cnt = 0;
+
+always @(posedge clk) begin
+  if (seq_out == 1'b1) begin 
+    det_cnt = det_cnt + 1;
+    $display("detect seq: %d at clk_cnt: %d", det_cnt, clk_cnt);
+  end
 end
 
 seq u_seq(
   .clk (clk),
   .rst_n (rst_n),
-  .w_i (w_i),
-  .z_o (z_o)
+  .seq_in (seq_in),
+  .seq_out (seq_out)
 );
 
 endmodule
