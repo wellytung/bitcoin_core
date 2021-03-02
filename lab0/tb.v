@@ -64,9 +64,14 @@ initial begin
   clk_cnt = 0;
   forever begin
     repeat(10)@(posedge clk); 
-    clk_cnt = clk_cnt + 10;
     $display("clk count : %d", clk_cnt);
   end
+end
+
+always @(posedge clk) begin
+
+  clk_cnt <= clk_cnt + 1;
+
 end
 
 initial begin
